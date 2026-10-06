@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Find your crew and encourage one another on FitQuest.">
+  <title>Connections | FitQuest</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="FitQuest home">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+      <span class="menu-lines"></span>
+      <span class="sr-only">Open navigation</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a class="active" aria-current="page" href="connections.html">Connections</a>
+      <a href="contact.html">Contact</a>
+      <a class="nav-signin" href="account.html">Sign in</a>
+    </nav>
+  </header>
+  <main class="page-wrap">
+    <section class="page-intro intro-with-action">
+      <div>
+        <p class="eyebrow">FITQUEST</p>
+        <h1>Connections</h1>
+        <p class="intro-text">Search the sample list to find students and add or remove a connection.</p>
+      </div>
+      <a class="button button-primary" href="index.html#workout-form-card">Log a workout <span aria-hidden="true">→</span></a>
+    </section>
+    <section class="content-card connections-search">
+      <div class="section-heading">
+        <div>
+          <h2>Students</h2>
+          <p class="muted">Use the buttons to connect or disconnect.</p>
+        </div>
+        <span class="pill">DEMO COMMUNITY</span>
+      </div>
+      <label class="sr-only" for="friend-search">Search people</label>
+      <div class="search-box">
+        <span aria-hidden="true">⌕</span>
+        <input id="friend-search" type="search" placeholder="Search by name..." autocomplete="off">
+      </div>
+      <div class="people-grid" id="people-list">
+        <article class="person-card" data-person="maya">
+          <span class="avatar avatar-coral">M</span>
+          <div class="person-details">
+            <h3>Person 1</h3>
+            <p>Walks, yoga, and fresh air</p>
+            <span class="person-status">Sample student</span>
+          </div>
+          <button class="button button-outline button-small follow-button" type="button" data-person-id="maya">＋ Connect</button>
+        </article>
+        <article class="person-card" data-person="jordan">
+          <span class="avatar avatar-lilac">J</span>
+          <div class="person-details">
+            <h3>Person 2</h3>
+            <p>Training for their first 5K</p>
+            <span class="person-status">Sample student</span>
+          </div>
+          <button class="button button-outline button-small follow-button" type="button" data-person-id="jordan">＋ Connect</button>
+        </article>
+        <article class="person-card" data-person="sam">
+          <span class="avatar avatar-gold">S</span>
+          <div class="person-details">
+            <h3>Person 3</h3>
+            <p>Small workouts, big goals</p>
+            <span class="person-status">Sample student</span>
+          </div>
+          <button class="button button-outline button-small follow-button" type="button" data-person-id="sam">＋ Connect</button>
+        </article>
+        <article class="person-card" data-person="alex">
+          <span class="avatar avatar-mint">A</span>
+          <div class="person-details">
+            <h3>Person 4</h3>
+            <p>Into strength and stretching</p>
+            <span class="person-status">Sample student</span>
+          </div>
+          <button class="button button-outline button-small follow-button" type="button" data-person-id="alex">＋ Connect</button>
+        </article>
+      </div>
+      <p id="no-people" class="empty-message" hidden>No one matched that search. Try another name.</p>
+      <p class="local-note">Connections are a visual demo and stay in this browser only.</p>
+    </section>
+    <section class="content-card encouragement-panel">
+      <span class="encouragement-icon" aria-hidden="true">✦</span>
+      <div>
+        <p class="eyebrow">ABOUT CONNECTIONS</p>
+        <h2>Activity can be more fun with friends.</h2>
+        <p class="muted">Find a classmate and encourage one another.</p>
+      </div>
+      <a class="small-link" href="index.html">Back to your activity <span aria-hidden="true">→</span></a>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="index.html"><span class="brand-mark">F</span><span>FitQuest</span></a>
+    <p>Move at your pace. Celebrate every step.</p>
+    <a href="contact.html">Get in touch</a>
+  </footer>
+  <div class="toast" role="status" aria-live="polite" data-toast></div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sign in or create your FitQuest demo account.">
+  <title>Sign in | FitQuest</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="FitQuest home">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+      <span class="menu-lines"></span>
+      <span class="sr-only">Open navigation</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="connections.html">Connections</a>
+      <a href="contact.html">Contact</a>
+      <a class="nav-signin active" aria-current="page" href="account.html">Sign in</a>
+    </nav>
+  </header>
+  <main class="page-wrap narrow-page">
+    <section class="auth-layout">
+      <div class="auth-aside">
+        <p class="eyebrow">YOUR NEXT STEP</p>
+        <h1>Your FitQuest account</h1>
+        <p>Sign in or create an account to see how the student fitness app could work.</p>
+      </div>
+      <section class="content-card auth-card">
+        <div class="auth-tabs" role="tablist" aria-label="Account options">
+          <button class="auth-tab active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Sign in</button>
+          <button class="auth-tab" type="button" data-auth-tab="signup" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <div data-auth-panel="login">
+          <p class="eyebrow">WELCOME BACK</p>
+          <h2>Good to see you</h2>
+          <p class="muted">This sign-in form is a visual demo only.</p>
+          <form class="simple-form demo-form">
+            <label for="login-email">Email address</label>
+            <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            <label for="login-password">Password</label>
+            <input id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+            <button class="button button-primary button-full" type="submit">Sign in <span aria-hidden="true">→</span></button>
+          </form>
+          <button class="forgot-link" type="button" data-toast-message="Password reset will be available when accounts are connected.">Forgot password?</button>
+        </div>
+        <div data-auth-panel="signup" hidden>
+          <p class="eyebrow">START YOUR JOURNEY</p>
+          <h2>Make an account</h2>
+          <p class="muted">Create a sample account to preview the sign-up flow.</p>
+          <form class="simple-form demo-form">
+            <label for="signup-name">Your name</label>
+            <input id="signup-name" type="text" placeholder="Your name" autocomplete="name" required>
+            <label for="signup-email">Email address</label>
+            <input id="signup-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            <label for="signup-password">Create a password</label>
+            <input id="signup-password" type="password" minlength="6" placeholder="At least 6 characters" autocomplete="new-password" required>
+            <button class="button button-primary button-full" type="submit">Create account <span aria-hidden="true">→</span></button>
+          </form>
+        </div>
+        <p class="demo-banner"><span aria-hidden="true">ⓘ</span> Static demo only. Accounts are not created, and details are not saved or sent. Do not enter a real password.</p>
+      </section>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="index.html"><span class="brand-mark">F</span><span>FitQuest</span></a>
+    <p>Move at your pace. Celebrate every step.</p>
+    <a href="contact.html">Get in touch</a>
+  </footer>
+  <div class="toast" role="status" aria-live="polite" data-toast></div>
+</body>
+</html>
