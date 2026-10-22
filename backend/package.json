@@ -6,12 +6,15 @@
   "scripts": {
     "migrate": "dotenv -e ../.env -- node-pg-migrate up",
     "migrate:down": "dotenv -e ../.env -- node-pg-migrate down",
-    "migrate:create": "dotenv -e ../.env -- node-pg-migrate create --migration-file-language sql"
+    "migrate:create": "dotenv -e ../.env -- node-pg-migrate create --migration-file-language sql",
+    "seed": "dotenv -e ../.env -- node seeds/seed.js",
+    "dev": "dotenv -e ../.env -- node src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "express": "^5.3.0",
     "pg": "^8.23.1"
   },
   "devDependencies": {

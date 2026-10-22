@@ -5,5 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Leaderboard | FitQuest</title>
 </head>
-<body></body>
+<body>
+  <h1>Weekly Leaderboard</h1>
+  <ul id="leaderboard"></ul>
+
+  <script>
+    fetch('/api/leaderboard')
+      .then(res => res.json())
+      .then(rows => {
+        document.getElementById('leaderboard').innerHTML = rows
+          .map(r => `<li>${r.username}: ${r.total_minutes} min</li>`)
+          .join('');
+      });
+  </script>
+</body>
 </html>
