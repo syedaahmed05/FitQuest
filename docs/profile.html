@@ -3,7 +3,298 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="View a FitQuest user profile with goals, stats, recent activity, and achievements.">
   <title>Profile | FitQuest</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
 </head>
-<body></body>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="FitQuest home">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+      <span class="menu-lines"></span>
+      <span class="sr-only">Open navigation</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="challenges.html">Challenges</a>
+      <a class="active" aria-current="page" href="profile.html">Profile</a>
+      <a href="connections.html">Connections</a>
+      <a class="nav-signin" href="account.html">Sign in</a>
+    </nav>
+  </header>
+
+  <main class="page-wrap narrow-page">
+    <section class="profile-shell" aria-label="User profile overview">
+      <header class="content-card profile-header">
+        <div class="profile-overview">
+          <div class="profile-avatar" id="profile-avatar" aria-label="User avatar">BE</div>
+          <div class="profile-meta">
+            <p class="eyebrow">USER PROFILE</p>
+            <h1 id="profile-name">Billie Eilish</h1>
+            <p class="muted" id="profile-tagline">Early-morning runner • Detroit, MI • Sunday reset</p>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="button button-primary" type="button">Edit profile</button>
+          <button class="button button-outline" type="button">Share</button>
+        </div>
+      </header>
+
+      <p class="local-note" id="profile-status">A quick look at Billie’s current training rhythm and goals.</p>
+
+      <section class="stats-grid profile-stats" aria-label="Profile summary statistics">
+        <article class="stat-card">
+          <span class="stat-icon" id="profile-streak-badge">07</span>
+          <div>
+            <p class="stat-label">Current streak</p>
+            <p class="stat-value"><span id="profile-streak">7</span> <span>days</span></p>
+          </div>
+          <span class="stat-foot">Strong momentum</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon" id="profile-session-badge">12</span>
+          <div>
+            <p class="stat-label">Sessions</p>
+            <p class="stat-value"><span id="profile-sessions">12</span> <span>this month</span></p>
+          </div>
+          <span class="stat-foot">Steady progress</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon" id="profile-minutes-badge">300</span>
+          <div>
+            <p class="stat-label">Minutes</p>
+            <p class="stat-value"><span id="profile-minutes">300</span> <span>min</span></p>
+          </div>
+          <span class="stat-foot">You are on track</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon" id="profile-connections-badge">24</span>
+          <div>
+            <p class="stat-label">Connections</p>
+            <p class="stat-value"><span id="profile-connections">24</span> <span>friends</span></p>
+          </div>
+          <span class="stat-foot">Community support</span>
+        </article>
+      </section>
+
+      <div class="profile-grid">
+        <section class="content-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">ABOUT</p>
+              <h2>Profile details</h2>
+            </div>
+          </div>
+          <div class="info-list">
+            <div class="info-row">
+              <span>Fitness level</span>
+              <strong id="profile-fitness-level">Intermediate</strong>
+            </div>
+            <div class="info-row">
+              <span>Favorite workout</span>
+              <strong id="profile-favorite-workout">Trail run</strong>
+            </div>
+            <div class="info-row">
+              <span>Availability</span>
+              <strong id="profile-availability">Mon, Wed, Sat</strong>
+            </div>
+            <div class="info-row">
+              <span>Challenge focus</span>
+              <strong id="profile-focus">Cardio + mobility</strong>
+            </div>
+          </div>
+        </section>
+
+        <aside class="content-card">
+          <p class="eyebrow">GOALS</p>
+          <h2>Current goals</h2>
+          <ul class="goal-list" id="profile-goal-list">
+            <li><span class="goal-status">✓</span><span>Complete 3 strength sessions this week</span></li>
+            <li><span class="goal-status">✓</span><span>Hit 250 active minutes by Saturday</span></li>
+            <li><span class="goal-status">✓</span><span>Try a new stretch routine every other day</span></li>
+          </ul>
+        </aside>
+      </div>
+
+      <div class="profile-grid lower-grid">
+        <section class="content-card">
+          <p class="eyebrow">ACTIVITY</p>
+          <h2>Recent activity</h2>
+          <ul class="timeline" id="profile-activity-list">
+            <li>
+              <span>5.2 mi trail run</span>
+              <time>Yesterday</time>
+            </li>
+            <li>
+              <span>Core and mobility workout</span>
+              <time>Monday</time>
+            </li>
+            <li>
+              <span>30-minute brisk walk</span>
+              <time>Sunday</time>
+            </li>
+            <li>
+              <span>Strength circuit</span>
+              <time>Last week</time>
+            </li>
+          </ul>
+        </section>
+
+        <section class="content-card">
+          <p class="eyebrow">ACHIEVEMENTS</p>
+          <h2>Badges earned</h2>
+          <div class="achievement-row">
+            <div class="achievement-badge"><span>🏃</span><small>Runner</small></div>
+            <div class="achievement-badge"><span>🔥</span><small>Streak</small></div>
+            <div class="achievement-badge"><span>💪</span><small>Strong</small></div>
+            <div class="achievement-badge"><span>🌟</span><small>Consistent</small></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="index.html">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <p>Move at your pace. Celebrate every step. Level up your life!</p>
+    <a href="contact.html">Get in touch</a>
+  </footer>
+
+  <script>
+    (function () {
+      function readData(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw === null) {
+            return fallback;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function saveData(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          // Ignore storage errors so the page still works.
+        }
+      }
+
+      function getInitials(name) {
+        return (name || 'FU').split(/\s+/).slice(0, 2).map(function (part) {
+          return part.charAt(0).toUpperCase();
+        }).join('').slice(0, 2);
+      }
+
+      function formatActivityDate(dateString) {
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) {
+          return 'Recent';
+        }
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+
+      const defaultUser = {
+        name: 'Billie Eilish',
+        city: 'Detroit, MI',
+        tagline: 'Early-morning runner • Detroit, MI • Sunday reset',
+        favorite: 'Trail run',
+        availability: 'Mon, Wed, Sat',
+        focus: 'Cardio + mobility',
+        level: 'Intermediate',
+        goals: [
+          'Complete 3 strength sessions this week',
+          'Hit 250 active minutes by Saturday',
+          'Try a new stretch routine every other day'
+        ]
+      };
+
+      const savedUser = readData('fitquest-user', null) || {};
+      const user = Object.assign({}, defaultUser, savedUser, {
+        name: 'Billie Eilish',
+        city: 'Detroit, MI',
+        tagline: 'Early-morning runner • Detroit, MI • Sunday reset'
+      });
+      saveData('fitquest-user', user);
+
+      const profileName = document.getElementById('profile-name');
+      const profileTagline = document.getElementById('profile-tagline');
+      const profileAvatar = document.getElementById('profile-avatar');
+      const profileStatus = document.getElementById('profile-status');
+      const profileFitness = document.getElementById('profile-fitness-level');
+      const profileFavorite = document.getElementById('profile-favorite-workout');
+      const profileAvailability = document.getElementById('profile-availability');
+      const profileFocus = document.getElementById('profile-focus');
+      const profileGoalList = document.getElementById('profile-goal-list');
+      const profileActivityList = document.getElementById('profile-activity-list');
+
+      profileName.textContent = user.name || 'Billie Eilish';
+      profileTagline.textContent = user.tagline || ('Active member • ' + (user.city || 'Your city'));
+      profileAvatar.textContent = getInitials(user.name || 'Billie Eilish');
+      profileFitness.textContent = user.level || 'Intermediate';
+      profileFavorite.textContent = user.favorite || 'Trail run';
+      profileAvailability.textContent = user.availability || 'Flexible schedule';
+      profileFocus.textContent = user.focus || 'Cardio + mobility';
+      profileStatus.textContent = 'A quick look at Billie’s current training rhythm and goals.';
+
+      const goals = Array.isArray(user.goals) && user.goals.length ? user.goals : defaultUser.goals;
+      profileGoalList.innerHTML = goals.map(function (goal) {
+        return '<li><span class="goal-status">✓</span><span>' + goal + '</span></li>';
+      }).join('');
+
+      const workouts = readData('fitquest-workouts', [
+        { type: 'Trail run', amount: 52, date: new Date(Date.now() - 86400000).toISOString() },
+        { type: 'Core and mobility', amount: 35, date: new Date(Date.now() - 3 * 86400000).toISOString() },
+        { type: 'Brisk walk', amount: 30, date: new Date(Date.now() - 5 * 86400000).toISOString() },
+        { type: 'Strength circuit', amount: 42, date: new Date(Date.now() - 8 * 86400000).toISOString() }
+      ]);
+
+      const safeWorkouts = Array.isArray(workouts) ? workouts : [];
+      const recent = safeWorkouts.slice(0, 4);
+      const activityNodes = recent.length ? recent : [
+        { type: 'Trail run', amount: 52, date: new Date(Date.now() - 86400000).toISOString() },
+        { type: 'Core and mobility', amount: 35, date: new Date(Date.now() - 3 * 86400000).toISOString() },
+        { type: 'Brisk walk', amount: 30, date: new Date(Date.now() - 5 * 86400000).toISOString() },
+        { type: 'Strength circuit', amount: 42, date: new Date(Date.now() - 8 * 86400000).toISOString() }
+      ];
+
+      profileActivityList.innerHTML = activityNodes.map(function (entry) {
+        const label = entry.type || 'Workout';
+        const minutes = entry.amount ? (Number(entry.amount) + ' min') : 'Active';
+        return '<li><span>' + label + ' ' + minutes + '</span><time>' + formatActivityDate(entry.date) + '</time></li>';
+      }).join('');
+
+      const connectionCount = Array.isArray(readData('fitquest-connections', [])) ? readData('fitquest-connections', []).length : 24;
+      const totalMinutes = safeWorkouts.reduce(function (sum, workout) {
+        return sum + (Number(workout.amount) || 0);
+      }, 0);
+      const sessionCount = safeWorkouts.length;
+
+      const streak = Math.min(7, Math.max(1, Math.round((sessionCount + connectionCount) / 5)));
+      document.getElementById('profile-streak').textContent = streak;
+      document.getElementById('profile-streak-badge').textContent = String(streak).padStart(2, '0');
+      document.getElementById('profile-sessions').textContent = String(sessionCount || 12);
+      document.getElementById('profile-session-badge').textContent = String(sessionCount || 12).padStart(2, '0');
+      document.getElementById('profile-minutes').textContent = String(totalMinutes || 300);
+      document.getElementById('profile-minutes-badge').textContent = String(totalMinutes || 300);
+      document.getElementById('profile-connections').textContent = String(connectionCount || 24);
+      document.getElementById('profile-connections-badge').textContent = String(connectionCount || 24).padStart(2, '0');
+
+      window.addEventListener('storage', function (event) {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections') {
+          window.location.reload();
+        }
+      });
+    }());
+  </script>
+</body>
 </html>
