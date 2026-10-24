@@ -147,9 +147,16 @@
         <section class="content-card">
           <p class="eyebrow">ACHIEVEMENTS</p>
           <h2>Badges earned</h2>
+<<<<<<< Updated upstream
           <p class="muted"><strong id="profile-xp-total">0</strong> XP earned</p>
           <div class="achievement-row" id="profile-achievements" aria-live="polite"></div>
           <p class="empty-message" id="profile-no-achievements">Complete a challenge to earn your first badge.</p>
+=======
+          <p class="muted" id="profile-xp">0 challenge XP earned</p>
+          <div class="achievement-row" id="profile-earned-badges" aria-live="polite">
+            <p class="empty-message">Finish a challenge to earn your first badge.</p>
+          </div>
+>>>>>>> Stashed changes
         </section>
       </div>
 
@@ -245,6 +252,40 @@
       const profileFocus = document.getElementById('profile-focus');
       const profileGoalList = document.getElementById('profile-goal-list');
       const profileActivityList = document.getElementById('profile-activity-list');
+      const earnedBadgesElement = document.getElementById('profile-earned-badges');
+      const challengeState = readData('fitquest-challenges', {});
+      const earnedBadges = Array.isArray(challengeState.earned) ? challengeState.earned : [];
+      const badgeCatalog = [
+        { id: 'moving-hour', name: 'Moving Hour', icon: '⏱' },
+        { id: 'find-your-rhythm', name: 'Find Your Rhythm', icon: '⚡' },
+        { id: 'show-up-again', name: 'Show Up Again', icon: '🌱' },
+        { id: 'going-further', name: 'Going Further', icon: '🏁' }
+      ].concat(Array.isArray(challengeState.custom) ? challengeState.custom.map(function (challenge) {
+        return challenge.badge;
+      }).filter(Boolean) : []);
+
+      document.getElementById('profile-xp').textContent = (Number(challengeState.xp) || 0) + ' challenge XP earned';
+      earnedBadgesElement.textContent = '';
+      const matchingBadges = badgeCatalog.filter(function (badge) {
+        return earnedBadges.includes(badge.id);
+      });
+      if (!matchingBadges.length) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.className = 'empty-message';
+        emptyMessage.textContent = 'Finish a challenge to earn your first badge.';
+        earnedBadgesElement.appendChild(emptyMessage);
+      } else {
+        matchingBadges.forEach(function (badge) {
+          const item = document.createElement('div');
+          item.className = 'achievement-badge';
+          const icon = document.createElement('span');
+          icon.textContent = badge.icon;
+          const label = document.createElement('small');
+          label.textContent = badge.name;
+          item.append(icon, label);
+          earnedBadgesElement.appendChild(item);
+        });
+      }
 
       profileName.textContent = user.name || 'Billie Eilish';
       profileTagline.textContent = user.tagline || ('Active member • ' + (user.city || 'Your city'));
