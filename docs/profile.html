@@ -147,16 +147,9 @@
         <section class="content-card">
           <p class="eyebrow">ACHIEVEMENTS</p>
           <h2>Badges earned</h2>
-<<<<<<< Updated upstream
           <p class="muted"><strong id="profile-xp-total">0</strong> XP earned</p>
-          <div class="achievement-row" id="profile-achievements" aria-live="polite"></div>
+          <div class="achievement-row" id="profile-earned-badges" aria-live="polite"></div>
           <p class="empty-message" id="profile-no-achievements">Complete a challenge to earn your first badge.</p>
-=======
-          <p class="muted" id="profile-xp">0 challenge XP earned</p>
-          <div class="achievement-row" id="profile-earned-badges" aria-live="polite">
-            <p class="empty-message">Finish a challenge to earn your first badge.</p>
-          </div>
->>>>>>> Stashed changes
         </section>
       </div>
 
@@ -252,40 +245,25 @@
       const profileFocus = document.getElementById('profile-focus');
       const profileGoalList = document.getElementById('profile-goal-list');
       const profileActivityList = document.getElementById('profile-activity-list');
-      const earnedBadgesElement = document.getElementById('profile-earned-badges');
-      const challengeState = readData('fitquest-challenges', {});
-      const earnedBadges = Array.isArray(challengeState.earned) ? challengeState.earned : [];
-      const badgeCatalog = [
-        { id: 'moving-hour', name: 'Moving Hour', icon: '⏱' },
-        { id: 'find-your-rhythm', name: 'Find Your Rhythm', icon: '⚡' },
-        { id: 'show-up-again', name: 'Show Up Again', icon: '🌱' },
-        { id: 'going-further', name: 'Going Further', icon: '🏁' }
-      ].concat(Array.isArray(challengeState.custom) ? challengeState.custom.map(function (challenge) {
-        return challenge.badge;
-      }).filter(Boolean) : []);
-
-      document.getElementById('profile-xp').textContent = (Number(challengeState.xp) || 0) + ' challenge XP earned';
-      earnedBadgesElement.textContent = '';
-      const matchingBadges = badgeCatalog.filter(function (badge) {
-        return earnedBadges.includes(badge.id);
+      const profileEarnedBadges = document.getElementById('profile-earned-badges');
+      const profileNoAchievements = document.getElementById('profile-no-achievements');
+      const earnedBadges = readData('fitquest-earned-badges', []);
+      const safeBadges = Array.isArray(earnedBadges) ? earnedBadges : [];
+      document.getElementById('profile-xp-total').textContent = safeBadges.reduce(function (total, badge) {
+        return total + (Number(badge.xp) || 0);
+      }, 0);
+      profileNoAchievements.hidden = safeBadges.length > 0;
+      safeBadges.forEach(function (badge) {
+        const item = document.createElement('div');
+        const icon = document.createElement('span');
+        const label = document.createElement('small');
+        item.className = 'achievement-badge';
+        icon.textContent = badge.icon || '🏅';
+        label.textContent = badge.name || 'Challenge badge';
+        item.appendChild(icon);
+        item.appendChild(label);
+        profileEarnedBadges.appendChild(item);
       });
-      if (!matchingBadges.length) {
-        const emptyMessage = document.createElement('p');
-        emptyMessage.className = 'empty-message';
-        emptyMessage.textContent = 'Finish a challenge to earn your first badge.';
-        earnedBadgesElement.appendChild(emptyMessage);
-      } else {
-        matchingBadges.forEach(function (badge) {
-          const item = document.createElement('div');
-          item.className = 'achievement-badge';
-          const icon = document.createElement('span');
-          icon.textContent = badge.icon;
-          const label = document.createElement('small');
-          label.textContent = badge.name;
-          item.append(icon, label);
-          earnedBadgesElement.appendChild(item);
-        });
-      }
 
       profileName.textContent = user.name || 'Billie Eilish';
       profileTagline.textContent = user.tagline || ('Active member • ' + (user.city || 'Your city'));
@@ -327,28 +305,39 @@
       document.getElementById('profile-connections').textContent = String(connectionCount);
       document.getElementById('profile-connections-badge').textContent = String(connectionCount).padStart(2, '0');
 
-      const challengeRewards = [
-        { id: 'streak', title: 'Streak Starter', icon: '🔥', xp: 120, target: 4 },
-        { id: 'minutes', title: 'Mileage Mission', icon: '🏃', xp: 180, target: 150 },
-        { id: 'strength', title: 'Strength Builder', icon: '💪', xp: 220, target: 3 },
-        { id: 'walk', title: 'Step Quest', icon: '🚶', xp: 100, target: 30 },
-        { id: 'run', title: 'Sprint Sprint', icon: '⚡', xp: 260, target: 45 },
-        { id: 'social', title: 'Team Boost', icon: '🤝', xp: 300, target: 2 }
-      ];
       const challengeCatalog = [
-        { id: 'streak', title: 'Streak Starter', description: 'Log activity for 4 straight days.', icon: '🔥' },
-        { id: 'minutes', title: 'Mileage Mission', description: 'Reach 150 total active minutes this week.', icon: '🏃' },
-        { id: 'strength', title: 'Strength Builder', description: 'Complete 3 strength or circuit sessions.', icon: '💪' },
-        { id: 'walk', title: 'Step Quest', description: 'Take a 30-minute walk or recovery session.', icon: '🚶' },
-        { id: 'run', title: 'Sprint Sprint', description: 'Hit a 45-minute cardio session this week.', icon: '⚡' },
-        { id: 'social', title: 'Team Boost', description: 'Connect with 2 friends.', icon: '🤝' }
+        { id: 'three-workouts', title: 'Find Your Rhythm', icon: '🎵', period: 'week' },
+        { id: '150-minutes', title: 'Move for 150', icon: '⚡', period: 'week' },
+        { id: 'three-activities', title: 'Mix It Up', icon: '🧭', period: 'week' },
+        { id: 'monthly-eight', title: 'Eight on the Board', icon: '📅', period: 'month' },
+        { id: 'monthly-600', title: 'Ten Hours Moving', icon: '⏱️', period: 'month' },
+        { id: 'monthly-variety', title: 'Try Something New', icon: '🧭', period: 'month' },
+        { id: 'yearly-100', title: 'Century of Sessions', icon: '🏁', period: 'year' },
+        { id: 'yearly-5000', title: 'Five Thousand Minutes', icon: '🌄', period: 'year' },
+        { id: 'yearly-variety', title: 'All-Round Adventurer', icon: '🗺️', period: 'year' }
       ];
 
       function renderJoinedChallenges() {
-        const savedChallenges = readData('fitquest-challenges', {});
-        const joinedChallenges = challengeCatalog.filter(function (challenge) {
-          return savedChallenges[challenge.id] === true;
-        });
+        const savedState = readData('fitquest-challenges', {});
+        const joinedIds = Array.isArray(savedState.joined) ? savedState.joined : [];
+        const completed = savedState.completed && typeof savedState.completed === 'object' ? savedState.completed : {};
+        const customChallenges = readData('fitquest-custom-challenges', []);
+        const customCatalog = Array.isArray(customChallenges) ? customChallenges : [];
+        const joinedChallenges = joinedIds.map(function (instanceId) {
+          const parts = String(instanceId).split(':');
+          const challengeId = parts[0];
+          const challenge = customCatalog.find(function (item) { return item.id === challengeId; })
+            || challengeCatalog.find(function (item) { return item.id === challengeId; });
+          if (!challenge) return null;
+          return {
+            instanceId: instanceId,
+            challengeId: challengeId,
+            title: challenge.title,
+            icon: challenge.icon || '🏅',
+            period: challenge.period || 'week',
+            isComplete: Boolean(completed[instanceId] || completed[challengeId])
+          };
+        }).filter(Boolean);
         const list = document.getElementById('joined-challenge-list');
         const emptyMessage = document.getElementById('no-joined-challenges');
         list.textContent = '';
@@ -356,29 +345,34 @@
 
         joinedChallenges.forEach(function (challenge) {
           const row = document.createElement('div');
-          const copy = document.createElement('span');
-          const icon = document.createElement('span');
+          const details = document.createElement('span');
           const title = document.createElement('strong');
-          const detail = document.createElement('small');
+          const meta = document.createElement('small');
           const leaveButton = document.createElement('button');
+          const periodLabel = challenge.period === 'year' ? 'Yearly' : challenge.period === 'month' ? 'Monthly' : 'Weekly';
 
           row.className = 'activity-item';
-          copy.className = 'joined-challenge-copy';
-          icon.textContent = challenge.icon + ' ';
-          title.textContent = challenge.title;
-          detail.textContent = challenge.description;
-          copy.append(icon, title, document.createElement('br'), detail);
+          details.className = 'joined-challenge-copy';
+          title.textContent = challenge.icon + ' ' + challenge.title;
+          meta.textContent = periodLabel + (challenge.isComplete ? ' · Completed' : ' · In progress');
+          details.appendChild(title);
+          details.appendChild(document.createElement('br'));
+          details.appendChild(meta);
           leaveButton.className = 'button button-small button-outline';
           leaveButton.type = 'button';
-          leaveButton.textContent = 'Leave';
-          leaveButton.setAttribute('aria-label', 'Leave ' + challenge.title);
+          leaveButton.textContent = 'Unjoin';
+          leaveButton.setAttribute('aria-label', 'Unjoin ' + challenge.title);
           leaveButton.addEventListener('click', function () {
             const currentState = readData('fitquest-challenges', {});
-            currentState[challenge.id] = false;
+            const currentJoined = Array.isArray(currentState.joined) ? currentState.joined : [];
+            currentState.joined = currentJoined.filter(function (id) {
+              return id !== challenge.instanceId && id !== challenge.challengeId;
+            });
             saveData('fitquest-challenges', currentState);
             renderJoinedChallenges();
           });
-          row.append(copy, leaveButton);
+          row.appendChild(details);
+          row.appendChild(leaveButton);
           list.appendChild(row);
         });
       }
@@ -404,40 +398,10 @@
       document.getElementById('profile-streak').textContent = activeStreak;
       document.getElementById('profile-streak-badge').textContent = String(activeStreak).padStart(2, '0');
 
-      const completedChallenges = challengeRewards.filter(function (challenge) {
-        if (challenge.id === 'streak') {
-          return activeStreak >= challenge.target;
-        }
-        if (challenge.id === 'minutes' || challenge.id === 'walk' || challenge.id === 'run') {
-          return totalMinutes >= challenge.target;
-        }
-        if (challenge.id === 'strength') {
-          return sessionCount >= challenge.target;
-        }
-        return connectionCount >= challenge.target;
-      });
-      const earnedXp = completedChallenges.reduce(function (total, challenge) {
-        return total + challenge.xp;
-      }, 0);
-      const achievements = document.getElementById('profile-achievements');
-      document.getElementById('profile-xp-total').textContent = earnedXp;
-      document.getElementById('profile-no-achievements').hidden = completedChallenges.length > 0;
-      achievements.innerHTML = completedChallenges.map(function (challenge) {
-        const badge = document.createElement('div');
-        const icon = document.createElement('span');
-        const label = document.createElement('small');
-        badge.className = 'achievement-badge';
-        icon.textContent = challenge.icon;
-        label.textContent = challenge.title;
-        badge.appendChild(icon);
-        badge.appendChild(label);
-        return badge.outerHTML;
-      }).join('');
-
       renderJoinedChallenges();
 
       window.addEventListener('storage', function (event) {
-        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections' || event.key === 'fitquest-challenges') {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections' || event.key === 'fitquest-challenges' || event.key === 'fitquest-custom-challenges' || event.key === 'fitquest-earned-badges') {
           window.location.reload();
         }
       });
