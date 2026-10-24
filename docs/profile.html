@@ -147,11 +147,9 @@
         <section class="content-card">
           <p class="eyebrow">ACHIEVEMENTS</p>
           <h2>Badges earned</h2>
-          <div class="achievement-row">
-            <div class="achievement-badge"><span>🏃</span><small>Runner</small></div>
-            <div class="achievement-badge"><span>🔥</span><small>Streak</small></div>
-            <div class="achievement-badge"><span>💪</span><small>Strong</small></div>
-            <div class="achievement-badge"><span>🌟</span><small>Consistent</small></div>
+          <p class="muted"><strong id="profile-xp-total">0</strong> XP earned</p>
+          <div class="achievement-row" id="profile-achievements" aria-live="polite"></div>
+          <p class="empty-message" id="profile-no-achievements">Complete a challenge to earn your first badge.</p>
           </div>
         </section>
       </div>
@@ -251,46 +249,94 @@
         return '<li><span class="goal-status">✓</span><span>' + goal + '</span></li>';
       }).join('');
 
-      const workouts = readData('fitquest-workouts', [
-        { type: 'Trail run', amount: 52, date: new Date(Date.now() - 86400000).toISOString() },
-        { type: 'Core and mobility', amount: 35, date: new Date(Date.now() - 3 * 86400000).toISOString() },
-        { type: 'Brisk walk', amount: 30, date: new Date(Date.now() - 5 * 86400000).toISOString() },
-        { type: 'Strength circuit', amount: 42, date: new Date(Date.now() - 8 * 86400000).toISOString() }
-      ]);
+      const workouts = readData('fitquest-workouts', []);
 
       const safeWorkouts = Array.isArray(workouts) ? workouts : [];
       const recent = safeWorkouts.slice(0, 4);
-      const activityNodes = recent.length ? recent : [
-        { type: 'Trail run', amount: 52, date: new Date(Date.now() - 86400000).toISOString() },
-        { type: 'Core and mobility', amount: 35, date: new Date(Date.now() - 3 * 86400000).toISOString() },
-        { type: 'Brisk walk', amount: 30, date: new Date(Date.now() - 5 * 86400000).toISOString() },
-        { type: 'Strength circuit', amount: 42, date: new Date(Date.now() - 8 * 86400000).toISOString() }
-      ];
-
-      profileActivityList.innerHTML = activityNodes.map(function (entry) {
+      profileActivityList.innerHTML = recent.length ? recent.map(function (entry) {
         const label = entry.type || 'Workout';
         const minutes = entry.amount ? (Number(entry.amount) + ' min') : 'Active';
         return '<li><span>' + label + ' ' + minutes + '</span><time>' + formatActivityDate(entry.date) + '</time></li>';
-      }).join('');
+      }).join('') : '<li><span>No workouts logged yet</span><time>Get started</time></li>';
 
-      const connectionCount = Array.isArray(readData('fitquest-connections', [])) ? readData('fitquest-connections', []).length : 24;
+      const connectionCount = Array.isArray(readData('fitquest-connections', [])) ? readData('fitquest-connections', []).length : 0;
       const totalMinutes = safeWorkouts.reduce(function (sum, workout) {
         return sum + (Number(workout.amount) || 0);
       }, 0);
       const sessionCount = safeWorkouts.length;
 
-      const streak = Math.min(7, Math.max(1, Math.round((sessionCount + connectionCount) / 5)));
+      const streak = 0;
       document.getElementById('profile-streak').textContent = streak;
       document.getElementById('profile-streak-badge').textContent = String(streak).padStart(2, '0');
-      document.getElementById('profile-sessions').textContent = String(sessionCount || 12);
-      document.getElementById('profile-session-badge').textContent = String(sessionCount || 12).padStart(2, '0');
-      document.getElementById('profile-minutes').textContent = String(totalMinutes || 300);
-      document.getElementById('profile-minutes-badge').textContent = String(totalMinutes || 300);
-      document.getElementById('profile-connections').textContent = String(connectionCount || 24);
-      document.getElementById('profile-connections-badge').textContent = String(connectionCount || 24).padStart(2, '0');
+      document.getElementById('profile-sessions').textContent = String(sessionCount);
+      document.getElementById('profile-session-badge').textContent = String(sessionCount).padStart(2, '0');
+      document.getElementById('profile-minutes').textContent = String(totalMinutes);
+      document.getElementById('profile-minutes-badge').textContent = String(totalMinutes);
+      document.getElementById('profile-connections').textContent = String(connectionCount);
+      document.getElementById('profile-connections-badge').textContent = String(connectionCount).padStart(2, '0');
+
+      const challengeRewards = [
+        { id: 'streak', title: 'Streak Starter', icon: '🔥', xp: 120, target: 4 },
+        { id: 'minutes', title: 'Mileage Mission', icon: '🏃', xp: 180, target: 150 },
+        { id: 'strength', title: 'Strength Builder', icon: '💪', xp: 220, target: 3 },
+        { id: 'walk', title: 'Step Quest', icon: '🚶', xp: 100, target: 30 },
+        { id: 'run', title: 'Sprint Sprint', icon: '⚡', xp: 260, target: 45 },
+        { id: 'social', title: 'Team Boost', icon: '🤝', xp: 300, target: 2 }
+      ];
+      const workoutDates = new Set();
+      safeWorkouts.forEach(function (workout) {
+        const date = new Date(workout.date);
+        if (!Number.isNaN(date.getTime())) {
+          workoutDates.add(date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate());
+        }
+      });
+
+      let activeStreak = 0;
+      const streakDate = new Date();
+      streakDate.setHours(0, 0, 0, 0);
+      const todayKey = streakDate.getFullYear() + '-' + streakDate.getMonth() + '-' + streakDate.getDate();
+      if (!workoutDates.has(todayKey)) {
+        streakDate.setDate(streakDate.getDate() - 1);
+      }
+      while (workoutDates.has(streakDate.getFullYear() + '-' + streakDate.getMonth() + '-' + streakDate.getDate())) {
+        activeStreak += 1;
+        streakDate.setDate(streakDate.getDate() - 1);
+      }
+      document.getElementById('profile-streak').textContent = activeStreak;
+      document.getElementById('profile-streak-badge').textContent = String(activeStreak).padStart(2, '0');
+
+      const completedChallenges = challengeRewards.filter(function (challenge) {
+        if (challenge.id === 'streak') {
+          return activeStreak >= challenge.target;
+        }
+        if (challenge.id === 'minutes' || challenge.id === 'walk' || challenge.id === 'run') {
+          return totalMinutes >= challenge.target;
+        }
+        if (challenge.id === 'strength') {
+          return sessionCount >= challenge.target;
+        }
+        return connectionCount >= challenge.target;
+      });
+      const earnedXp = completedChallenges.reduce(function (total, challenge) {
+        return total + challenge.xp;
+      }, 0);
+      const achievements = document.getElementById('profile-achievements');
+      document.getElementById('profile-xp-total').textContent = earnedXp;
+      document.getElementById('profile-no-achievements').hidden = completedChallenges.length > 0;
+      achievements.innerHTML = completedChallenges.map(function (challenge) {
+        const badge = document.createElement('div');
+        const icon = document.createElement('span');
+        const label = document.createElement('small');
+        badge.className = 'achievement-badge';
+        icon.textContent = challenge.icon;
+        label.textContent = challenge.title;
+        badge.appendChild(icon);
+        badge.appendChild(label);
+        return badge.outerHTML;
+      }).join('');
 
       window.addEventListener('storage', function (event) {
-        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections') {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections' || event.key === 'fitquest-challenges') {
           window.location.reload();
         }
       });
