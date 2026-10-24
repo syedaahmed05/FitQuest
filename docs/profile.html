@@ -150,9 +150,20 @@
           <p class="muted"><strong id="profile-xp-total">0</strong> XP earned</p>
           <div class="achievement-row" id="profile-achievements" aria-live="polite"></div>
           <p class="empty-message" id="profile-no-achievements">Complete a challenge to earn your first badge.</p>
-          </div>
         </section>
       </div>
+
+      <section class="content-card joined-challenges-card" aria-labelledby="joined-challenges-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR QUESTS</p>
+            <h2 id="joined-challenges-heading">Joined challenges</h2>
+          </div>
+          <a class="small-link" href="challenges.html">Browse challenges</a>
+        </div>
+        <div class="activity-list" id="joined-challenge-list" aria-live="polite"></div>
+        <p class="empty-message" id="no-joined-challenges">You haven’t joined any challenges yet.</p>
+      </section>
     </section>
   </main>
 
@@ -283,6 +294,53 @@
         { id: 'run', title: 'Sprint Sprint', icon: '⚡', xp: 260, target: 45 },
         { id: 'social', title: 'Team Boost', icon: '🤝', xp: 300, target: 2 }
       ];
+      const challengeCatalog = [
+        { id: 'streak', title: 'Streak Starter', description: 'Log activity for 4 straight days.', icon: '🔥' },
+        { id: 'minutes', title: 'Mileage Mission', description: 'Reach 150 total active minutes this week.', icon: '🏃' },
+        { id: 'strength', title: 'Strength Builder', description: 'Complete 3 strength or circuit sessions.', icon: '💪' },
+        { id: 'walk', title: 'Step Quest', description: 'Take a 30-minute walk or recovery session.', icon: '🚶' },
+        { id: 'run', title: 'Sprint Sprint', description: 'Hit a 45-minute cardio session this week.', icon: '⚡' },
+        { id: 'social', title: 'Team Boost', description: 'Connect with 2 friends.', icon: '🤝' }
+      ];
+
+      function renderJoinedChallenges() {
+        const savedChallenges = readData('fitquest-challenges', {});
+        const joinedChallenges = challengeCatalog.filter(function (challenge) {
+          return savedChallenges[challenge.id] === true;
+        });
+        const list = document.getElementById('joined-challenge-list');
+        const emptyMessage = document.getElementById('no-joined-challenges');
+        list.textContent = '';
+        emptyMessage.hidden = joinedChallenges.length > 0;
+
+        joinedChallenges.forEach(function (challenge) {
+          const row = document.createElement('div');
+          const copy = document.createElement('span');
+          const icon = document.createElement('span');
+          const title = document.createElement('strong');
+          const detail = document.createElement('small');
+          const leaveButton = document.createElement('button');
+
+          row.className = 'activity-item';
+          copy.className = 'joined-challenge-copy';
+          icon.textContent = challenge.icon + ' ';
+          title.textContent = challenge.title;
+          detail.textContent = challenge.description;
+          copy.append(icon, title, document.createElement('br'), detail);
+          leaveButton.className = 'button button-small button-outline';
+          leaveButton.type = 'button';
+          leaveButton.textContent = 'Leave';
+          leaveButton.setAttribute('aria-label', 'Leave ' + challenge.title);
+          leaveButton.addEventListener('click', function () {
+            const currentState = readData('fitquest-challenges', {});
+            currentState[challenge.id] = false;
+            saveData('fitquest-challenges', currentState);
+            renderJoinedChallenges();
+          });
+          row.append(copy, leaveButton);
+          list.appendChild(row);
+        });
+      }
       const workoutDates = new Set();
       safeWorkouts.forEach(function (workout) {
         const date = new Date(workout.date);
@@ -334,6 +392,8 @@
         badge.appendChild(label);
         return badge.outerHTML;
       }).join('');
+
+      renderJoinedChallenges();
 
       window.addEventListener('storage', function (event) {
         if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections' || event.key === 'fitquest-challenges') {
