@@ -3,7 +3,375 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="See the active FitQuest leaderboard and compare weekly movement totals with your community.">
   <title>Leaderboard | FitQuest</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+  <style>
+    body {
+      background: var(--page);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+    }
+
+    .leaderboard-wrap {
+      width: min(1100px, 90%);
+      margin: 0 auto;
+      padding: 36px 0 60px;
+    }
+
+    .leaderboard-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .leaderboard-header h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: 1.1;
+    }
+
+    .leaderboard-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .top-three {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .podium-card {
+      position: relative;
+      overflow: hidden;
+      padding: 20px 18px 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: 0 8px 24px rgba(16, 42, 76, 0.08);
+    }
+
+    .podium-card:nth-child(1) {
+      background: linear-gradient(180deg, #f7f2d6 0%, var(--white) 82%);
+      border-color: rgba(196, 164, 43, 0.45);
+    }
+
+    .podium-card:nth-child(2) {
+      background: linear-gradient(180deg, #e2e8ee 0%, #c7ced7 26%, #f7f9fb 78%, var(--white) 100%);
+      border-color: rgba(115, 126, 136, 0.8);
+      box-shadow: 0 10px 26px rgba(120, 130, 141, 0.22);
+    }
+
+    .podium-card:nth-child(3) {
+      background: linear-gradient(180deg, #f3e9df 0%, var(--white) 82%);
+      border-color: rgba(154, 103, 59, 0.45);
+    }
+
+    .podium-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .podium-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+    }
+
+    .podium-score {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--navy);
+      margin: 0 0 4px;
+    }
+
+    .podium-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .leaderboard-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 54px 1.5fr 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: 0 8px 20px rgba(16, 42, 76, 0.04);
+    }
+
+    .leaderboard-row.is-user {
+      border-color: rgba(46, 110, 170, 0.5);
+      background: #f4f9ff;
+    }
+
+    .rank-pill {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--light-blue);
+      color: var(--navy);
+      font-weight: bold;
+    }
+
+    .person-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mini-avatar {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--light-blue);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: bold;
+      flex-shrink: 0;
+      line-height: 1;
+      letter-spacing: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transform: translateY(0);
+    }
+
+    .person-name strong,
+    .person-name span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-name span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .leaderboard-metric {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .leaderboard-score {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--navy);
+      text-align: right;
+    }
+
+    .leaderboard-empty {
+      display: none;
+      padding: 22px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      background: var(--white);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .leaderboard-empty.visible {
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      .top-three {
+        grid-template-columns: 1fr;
+      }
+
+      .leaderboard-row {
+        grid-template-columns: 44px 1fr auto;
+      }
+
+      .leaderboard-metric {
+        display: none;
+      }
+    }
+  </style>
 </head>
-<body></body>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="FitQuest home">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+      <span class="menu-lines"></span>
+      <span class="sr-only">Open navigation</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="connections.html">Connections</a>
+      <a href="profile.html">Profile</a>
+      <a class="active" aria-current="page" href="leaderboard.html">Leaderboard</a>
+      <a class="nav-signin" href="account.html">Sign in</a>
+    </nav>
+  </header>
+
+  <main class="leaderboard-wrap">
+    <header class="leaderboard-header">
+      <div>
+        <p class="eyebrow">COMMUNITY</p>
+        <h1>Leaderboard</h1>
+      </div>
+      <a class="button button-outline" href="index.html">Back to dashboard</a>
+    </header>
+
+    <section class="leaderboard-panel">
+      <div class="top-three" id="leaderboard-top"></div>
+      <div class="leaderboard-list" id="leaderboard-list" aria-live="polite"></div>
+      <div class="leaderboard-empty" id="leaderboard-empty">No activity has been logged yet. Add a workout to start the leaderboard.</div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="index.html">
+      <span class="brand-mark">F</span>
+      <span>FitQuest</span>
+    </a>
+    <p>Move at your pace. Celebrate every step. Level up your life!</p>
+    <a href="contact.html">Get in touch</a>
+  </footer>
+
+  <script>
+    (function () {
+      function readData(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw === null) {
+            return fallback;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function saveData(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          // Ignore storage issues so the page still works.
+        }
+      }
+
+      function getInitials(name) {
+        return (name || 'FU').split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) {
+          return part.charAt(0).toUpperCase();
+        }).join('').slice(0, 2);
+      }
+
+      function buildPlayerData() {
+        const currentUser = readData('fitquest-user', { name: 'Billie Eilish' });
+        const currentName = currentUser && currentUser.name ? currentUser.name : 'Billie Eilish';
+        const workouts = Array.isArray(readData('fitquest-workouts', [])) ? readData('fitquest-workouts', []) : [];
+        const currentMinutes = workouts.reduce(function (total, workout) {
+          return total + (Number(workout.amount) || 0);
+        }, 0);
+
+        const players = {
+          [currentName]: {
+            name: currentName,
+            minutes: currentMinutes,
+            workouts: workouts.length,
+            badge: 'You'
+          },
+          'Alex Lewis': { name: 'Alex Lewis', minutes: 360, workouts: 8, badge: 'Runner' },
+          'Maya Chen': { name: 'Maya Chen', minutes: 330, workouts: 7, badge: 'Climber' },
+          'Jordan Smith': { name: 'Jordan Smith', minutes: 295, workouts: 6, badge: 'Cyclist' },
+          'Aaliyah Brooks': { name: 'Aaliyah Brooks', minutes: 270, workouts: 5, badge: 'Strong' }
+        };
+
+        return Object.values(players).sort(function (a, b) {
+          return b.minutes - a.minutes;
+        });
+      }
+
+      function renderLeaderboard() {
+        const topContainer = document.getElementById('leaderboard-top');
+        const listContainer = document.getElementById('leaderboard-list');
+        const emptyState = document.getElementById('leaderboard-empty');
+        const players = buildPlayerData();
+
+        if (!players.length) {
+          emptyState.classList.add('visible');
+          topContainer.innerHTML = '';
+          listContainer.innerHTML = '';
+          return;
+        }
+
+        emptyState.classList.remove('visible');
+
+        const topThree = players.slice(0, 3);
+        topContainer.innerHTML = topThree.map(function (player, index) {
+          const rankLabel = index === 0 ? '1' : index === 1 ? '2' : '3';
+          const subtitle = player.workouts + ' sessions';
+          return '<article class="podium-card">' +
+            '<span class="podium-rank">' + rankLabel + '</span>' +
+            '<h2>' + player.name + '</h2>' +
+            '<p class="podium-score">' + player.minutes + ' min</p>' +
+            '<p class="podium-meta">' + subtitle + ' • ' + (player.badge || 'Active') + '</p>' +
+            '</article>';
+        }).join('');
+
+        const rankedList = players.map(function (player, index) {
+          const isCurrentUser = player.name === (readData('fitquest-user', { name: 'Billie Eilish' }).name || 'Billie Eilish');
+          return '<div class="leaderboard-row ' + (isCurrentUser ? 'is-user' : '') + '">' +
+            '<div class="rank-pill">#' + (index + 1) + '</div>' +
+            '<div class="person-name">' +
+            '<span class="mini-avatar">' + getInitials(player.name) + '</span>' +
+            '<div>' +
+            '<strong>' + player.name + '</strong>' +
+            '<span>' + player.badge + '</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="leaderboard-metric">' + player.workouts + ' workouts</div>' +
+            '<div class="leaderboard-score">' + player.minutes + ' min</div>' +
+            '</div>';
+        }).join('');
+
+        listContainer.innerHTML = rankedList;
+      }
+
+      renderLeaderboard();
+
+      window.addEventListener('storage', function (event) {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts') {
+          renderLeaderboard();
+        }
+      });
+    }());
+  </script>
+</body>
 </html>
