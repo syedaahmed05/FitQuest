@@ -21,6 +21,7 @@
     <nav class="site-nav" id="site-nav" aria-label="Main navigation">
       <a href="index.html">Home</a>
       <a href="challenges.html">Challenges</a>
+      <a href="leaderboard.html">Leaderboard</a>
       <a class="active" aria-current="page" href="profile.html">Profile</a>
       <a href="connections.html">Connections</a>
       <a class="nav-signin" href="account.html">Sign in</a>
@@ -39,12 +40,70 @@
           </div>
         </div>
         <div class="profile-actions">
-          <button class="button button-primary" type="button">Edit profile</button>
-          <button class="button button-outline" type="button">Share</button>
+          <button class="button button-primary" id="edit-profile-button" type="button">Edit profile</button>
+          <button class="button button-outline" id="share-profile-button" type="button">Share</button>
+          <button class="button button-outline" id="connect-profile-button" type="button" hidden>＋ Connect</button>
         </div>
       </header>
 
       <p class="local-note" id="profile-status">A quick look at Billie’s current training rhythm and goals.</p>
+      <section class="content-card profile-level-card" id="profile-level-card" aria-label="Current level progress">
+        <div class="profile-level-heading">
+          <div>
+            <p class="eyebrow">YOUR PROGRESS</p>
+            <h2 id="profile-level">Level 1</h2>
+          </div>
+          <strong class="profile-level-xp"><span id="profile-level-current-xp">0</span> / <span id="profile-level-required-xp">250</span> XP to next level</strong>
+        </div>
+        <div class="profile-level-track" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="250" aria-valuenow="0">
+          <span id="profile-level-progress"></span>
+        </div>
+      </section>
+      <section class="content-card shared-profile-notice" id="shared-profile-notice" hidden>
+        <p class="eyebrow">SHARED FITQUEST PROFILE</p>
+        <p id="shared-profile-description">This profile was shared with you.</p>
+        <p class="muted">Connections are a local demo and are not sent to the profile owner.</p>
+      </section>
+      <section class="content-card shared-profile-error" id="shared-profile-error" role="alert" hidden>
+        <h2>This shared profile link is unavailable</h2>
+        <p>The profile details in this link are missing or invalid. Ask the person to share a new link.</p>
+      </section>
+
+      <dialog class="profile-edit-dialog profile-share-dialog" id="profile-share-dialog" aria-labelledby="profile-share-title">
+        <h2 id="profile-share-title">Share your profile</h2>
+        <p class="muted">Anyone with this link can view the name, bio, and photo shown here.</p>
+        <label for="profile-share-link">Profile link</label>
+        <input id="profile-share-link" type="text" readonly>
+        <p class="profile-edit-error" id="profile-share-error" role="status"></p>
+        <div class="profile-edit-actions">
+          <button class="button button-outline" id="close-profile-share" type="button">Close</button>
+          <button class="button button-primary" id="copy-profile-share" type="button">Copy link</button>
+        </div>
+      </dialog>
+
+      <dialog class="profile-edit-dialog" id="profile-edit-dialog" aria-labelledby="profile-edit-title">
+        <form id="profile-edit-form">
+          <h2 id="profile-edit-title">Edit profile</h2>
+          <label for="profile-edit-name">Name</label>
+          <input id="profile-edit-name" name="name" type="text" maxlength="60" required>
+          <label for="profile-edit-bio">Bio</label>
+          <textarea id="profile-edit-bio" name="bio" rows="4" maxlength="240"></textarea>
+          <label for="profile-edit-photo">Profile photo</label>
+          <div class="profile-edit-photo-row">
+            <div class="profile-edit-avatar" id="profile-edit-avatar" aria-hidden="true"></div>
+            <div>
+              <input id="profile-edit-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+              <button class="button button-small button-outline" id="remove-profile-photo" type="button">Remove photo</button>
+            </div>
+          </div>
+          <p class="muted profile-edit-help">JPEG, PNG, WebP, or GIF, up to 8 MB.</p>
+          <p class="profile-edit-error" id="profile-edit-error" role="alert"></p>
+          <div class="profile-edit-actions">
+            <button class="button button-outline" id="cancel-profile-edit" type="button">Cancel</button>
+            <button class="button button-primary" id="save-profile-edit" type="submit">Save changes</button>
+          </div>
+        </form>
+      </dialog>
 
       <section class="stats-grid profile-stats" aria-label="Profile summary statistics">
         <article class="stat-card">
@@ -147,12 +206,9 @@
         <section class="content-card">
           <p class="eyebrow">ACHIEVEMENTS</p>
           <h2>Badges earned</h2>
-          <div class="achievement-row">
-            <div class="achievement-badge"><span>🏃</span><small>Runner</small></div>
-            <div class="achievement-badge"><span>🔥</span><small>Streak</small></div>
-            <div class="achievement-badge"><span>💪</span><small>Strong</small></div>
-            <div class="achievement-badge"><span>🌟</span><small>Consistent</small></div>
-          </div>
+          <p class="muted"><strong id="profile-xp-total">0</strong> XP earned</p>
+          <div class="achievement-row" id="profile-earned-badges" aria-live="polite"></div>
+          <p class="empty-message" id="profile-no-achievements">Complete a challenge to earn your first badge.</p>
         </section>
       </div>
     </section>
@@ -184,8 +240,41 @@
       function saveData(key, value) {
         try {
           localStorage.setItem(key, JSON.stringify(value));
+          return true;
         } catch (error) {
-          // Ignore storage errors so the page still works.
+          return false;
+        }
+      }
+
+      function encodeShareData(value) {
+        const bytes = new TextEncoder().encode(JSON.stringify(value));
+        let binary = '';
+        bytes.forEach(function (byte) {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
+      function decodeShareData(value) {
+        try {
+          const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+          const binary = atob(base64);
+          const bytes = Uint8Array.from(binary, function (character) {
+            return character.charCodeAt(0);
+          });
+          const profile = JSON.parse(new TextDecoder().decode(bytes));
+          if (!profile || typeof profile.id !== 'string' || typeof profile.name !== 'string' || typeof profile.bio !== 'string') {
+            return null;
+          }
+          if (profile.name.length > 60 || profile.bio.length > 240) {
+            return null;
+          }
+          if (profile.avatar !== null && (typeof profile.avatar !== 'string' || profile.avatar.length > 500000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(profile.avatar))) {
+            return null;
+          }
+          return profile;
+        } catch (error) {
+          return null;
         }
       }
 
@@ -203,10 +292,23 @@
         return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       }
 
+      function getLevelProgress(totalXp) {
+        let level = 1;
+        let xpIntoLevel = Math.max(0, Math.floor(totalXp));
+        let xpRequired = 250;
+        while (xpIntoLevel >= xpRequired) {
+          xpIntoLevel -= xpRequired;
+          level += 1;
+          xpRequired = Math.ceil(xpRequired * 1.5);
+        }
+        return { level: level, xpIntoLevel: xpIntoLevel, xpRequired: xpRequired };
+      }
+
       const defaultUser = {
         name: 'Billie Eilish',
         city: 'Detroit, MI',
         tagline: 'Early-morning runner • Detroit, MI • Sunday reset',
+        bio: 'Early-morning runner • Detroit, MI • Sunday reset',
         favorite: 'Trail run',
         availability: 'Mon, Wed, Sat',
         focus: 'Cardio + mobility',
@@ -219,16 +321,44 @@
       };
 
       const savedUser = readData('fitquest-user', null) || {};
-      const user = Object.assign({}, defaultUser, savedUser, {
-        name: 'Billie Eilish',
-        city: 'Detroit, MI',
-        tagline: 'Early-morning runner • Detroit, MI • Sunday reset'
-      });
+      const user = Object.assign({}, defaultUser, savedUser);
+      if (!savedUser.bio && savedUser.tagline) {
+        user.bio = savedUser.tagline;
+      }
+      if (!user.shareId) {
+        user.shareId = window.crypto && typeof window.crypto.randomUUID === 'function'
+          ? window.crypto.randomUUID()
+          : Date.now().toString(36) + Math.random().toString(36).slice(2);
+      }
       saveData('fitquest-user', user);
 
+      const sharedValue = new URLSearchParams(window.location.search).get('shared');
+      const sharedProfile = sharedValue ? decodeShareData(sharedValue) : null;
       const profileName = document.getElementById('profile-name');
       const profileTagline = document.getElementById('profile-tagline');
       const profileAvatar = document.getElementById('profile-avatar');
+      const editProfileButton = document.getElementById('edit-profile-button');
+      const shareProfileButton = document.getElementById('share-profile-button');
+      const connectProfileButton = document.getElementById('connect-profile-button');
+      const sharedProfileNotice = document.getElementById('shared-profile-notice');
+      const sharedProfileDescription = document.getElementById('shared-profile-description');
+      const sharedProfileError = document.getElementById('shared-profile-error');
+      const profileStats = document.querySelector('.profile-stats');
+      const profileLevelCard = document.getElementById('profile-level-card');
+      const profileSections = document.querySelectorAll('.profile-grid');
+      const shareProfileDialog = document.getElementById('profile-share-dialog');
+      const profileShareLink = document.getElementById('profile-share-link');
+      const profileShareError = document.getElementById('profile-share-error');
+      const editProfileDialog = document.getElementById('profile-edit-dialog');
+      const editProfileForm = document.getElementById('profile-edit-form');
+      const editNameInput = document.getElementById('profile-edit-name');
+      const editBioInput = document.getElementById('profile-edit-bio');
+      const editPhotoInput = document.getElementById('profile-edit-photo');
+      const editAvatarPreview = document.getElementById('profile-edit-avatar');
+      const removePhotoButton = document.getElementById('remove-profile-photo');
+      const cancelProfileEditButton = document.getElementById('cancel-profile-edit');
+      const saveProfileEditButton = document.getElementById('save-profile-edit');
+      const profileEditError = document.getElementById('profile-edit-error');
       const profileStatus = document.getElementById('profile-status');
       const profileFitness = document.getElementById('profile-fitness-level');
       const profileFavorite = document.getElementById('profile-favorite-workout');
@@ -237,9 +367,267 @@
       const profileGoalList = document.getElementById('profile-goal-list');
       const profileActivityList = document.getElementById('profile-activity-list');
 
-      profileName.textContent = user.name || 'Billie Eilish';
-      profileTagline.textContent = user.tagline || ('Active member • ' + (user.city || 'Your city'));
-      profileAvatar.textContent = getInitials(user.name || 'Billie Eilish');
+      const isSharedView = sharedValue !== null;
+      const profileToDisplay = isSharedView ? sharedProfile : user;
+      if (isSharedView && !sharedProfile) {
+        document.querySelector('.profile-header').hidden = true;
+        document.getElementById('profile-status').hidden = true;
+        profileStats.hidden = true;
+        profileLevelCard.hidden = true;
+        profileSections.forEach(function (section) { section.hidden = true; });
+        sharedProfileError.hidden = false;
+      } else {
+        profileName.textContent = profileToDisplay.name || 'Billie Eilish';
+        profileTagline.textContent = profileToDisplay.bio || ('Active member • ' + (user.city || 'Your city'));
+      }
+
+      function renderAvatar(container, avatar, name, alt) {
+        container.replaceChildren();
+        if (typeof avatar === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(avatar)) {
+          const image = document.createElement('img');
+          image.src = avatar;
+          image.alt = alt;
+          container.appendChild(image);
+          return;
+        }
+        container.textContent = getInitials(name || 'Billie Eilish');
+      }
+
+      function renderProfileAvatar() {
+        renderAvatar(profileAvatar, profileToDisplay.avatar, profileToDisplay.name, 'Profile photo');
+      }
+      if (!isSharedView) {
+        renderProfileAvatar();
+      } else if (sharedProfile) {
+        renderProfileAvatar();
+        document.querySelector('.profile-header .eyebrow').textContent = 'FITQUEST PROFILE';
+        editProfileButton.hidden = true;
+        shareProfileButton.hidden = true;
+        connectProfileButton.hidden = false;
+        profileStats.hidden = true;
+        profileLevelCard.hidden = true;
+        profileSections.forEach(function (section) { section.hidden = true; });
+        profileStatus.hidden = true;
+        sharedProfileNotice.hidden = false;
+        sharedProfileDescription.textContent = 'You are viewing ' + sharedProfile.name + '\'s shared profile.';
+
+        const connectionId = 'shared:' + sharedProfile.id;
+        function renderConnectionButton() {
+          const connections = readData('fitquest-connections', []);
+          const isConnected = Array.isArray(connections) && connections.includes(connectionId);
+          connectProfileButton.textContent = isConnected ? '✓ Connected' : '＋ Connect';
+          connectProfileButton.classList.toggle('is-connected', isConnected);
+          connectProfileButton.setAttribute('aria-pressed', String(isConnected));
+        }
+        renderConnectionButton();
+        connectProfileButton.addEventListener('click', function () {
+          const connections = readData('fitquest-connections', []);
+          const currentConnections = Array.isArray(connections) ? connections : [];
+          const isConnected = currentConnections.includes(connectionId);
+          const updatedConnections = isConnected
+            ? currentConnections.filter(function (id) { return id !== connectionId; })
+            : currentConnections.concat(connectionId);
+          if (!saveData('fitquest-connections', updatedConnections)) {
+            sharedProfileDescription.textContent = 'The connection could not be saved in this browser.';
+            return;
+          }
+          renderConnectionButton();
+          sharedProfileDescription.textContent = isConnected
+            ? 'You removed your local connection to ' + sharedProfile.name + '.'
+            : 'You connected with ' + sharedProfile.name + ' in this browser.';
+        });
+      }
+      if (isSharedView) {
+        return;
+      }
+
+      let pendingAvatar = user.avatar || null;
+      let removeAvatar = false;
+      function renderEditAvatar() {
+        renderAvatar(editAvatarPreview, removeAvatar ? null : pendingAvatar, editNameInput.value, 'Selected profile photo');
+        removePhotoButton.hidden = !pendingAvatar || removeAvatar;
+      }
+
+      function openProfileEditor() {
+        editNameInput.value = user.name || '';
+        editBioInput.value = user.bio || user.tagline || '';
+        editPhotoInput.value = '';
+        editNameInput.setCustomValidity('');
+        pendingAvatar = user.avatar || null;
+        removeAvatar = false;
+        profileEditError.textContent = '';
+        renderEditAvatar();
+        editProfileDialog.showModal();
+      }
+
+      shareProfileButton.addEventListener('click', async function () {
+        const shareData = {
+          id: user.shareId,
+          name: user.name || 'FitQuest member',
+          bio: user.bio || '',
+          avatar: user.avatar || null
+        };
+        let encodedProfile;
+        try {
+          encodedProfile = encodeShareData(shareData);
+        } catch (error) {
+          profileStatus.textContent = 'Your profile link could not be created.';
+          return;
+        }
+        if (encodedProfile.length > 650000) {
+          profileStatus.textContent = 'The profile photo makes this link too large. Remove or replace the photo and try again.';
+          return;
+        }
+        const shareUrl = new URL('account.html', window.location.href);
+        shareUrl.searchParams.set('shared', encodedProfile);
+        profileShareLink.value = shareUrl.href;
+        profileShareError.textContent = window.location.protocol === 'file:'
+          ? 'This page is opened from a local file. The link only works on this device until the site is hosted.'
+          : '';
+
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'FitQuest profile: ' + shareData.name,
+              text: 'View ' + shareData.name + '\'s FitQuest profile and connect.',
+              url: shareUrl.href
+            });
+            return;
+          } catch (error) {
+            if (error.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+        shareProfileDialog.showModal();
+      });
+      document.getElementById('close-profile-share').addEventListener('click', function () {
+        shareProfileDialog.close();
+      });
+      document.getElementById('copy-profile-share').addEventListener('click', async function () {
+        try {
+          await navigator.clipboard.writeText(profileShareLink.value);
+          profileShareError.textContent = 'Link copied. Anyone with it can view this shared profile.';
+        } catch (error) {
+          profileShareLink.focus();
+          profileShareLink.select();
+          profileShareError.textContent = 'Automatic copy is unavailable. Select and copy the link above.';
+        }
+      });
+
+      let photoReadSequence = 0;
+      editProfileButton.addEventListener('click', openProfileEditor);
+      editProfileDialog.addEventListener('cancel', function () {
+        photoReadSequence += 1;
+        saveProfileEditButton.disabled = false;
+      });
+      editNameInput.addEventListener('input', function () {
+        editNameInput.setCustomValidity('');
+        renderEditAvatar();
+      });
+      editPhotoInput.addEventListener('change', function () {
+        const sequence = ++photoReadSequence;
+        saveProfileEditButton.disabled = false;
+        const file = editPhotoInput.files && editPhotoInput.files[0];
+        if (!file) {
+          return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          profileEditError.textContent = 'Choose an image smaller than 8 MB.';
+          editPhotoInput.value = '';
+          return;
+        }
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+          profileEditError.textContent = 'Choose a JPEG, PNG, WebP, or GIF image.';
+          editPhotoInput.value = '';
+          return;
+        }
+
+        profileEditError.textContent = '';
+        saveProfileEditButton.disabled = true;
+        const reader = new FileReader();
+        reader.onerror = function () {
+          if (sequence !== photoReadSequence) return;
+          profileEditError.textContent = 'The photo could not be read. Please try another image.';
+          saveProfileEditButton.disabled = false;
+        };
+        reader.onload = function () {
+          if (sequence !== photoReadSequence) return;
+          const sourceImage = new Image();
+          sourceImage.onerror = function () {
+            if (sequence !== photoReadSequence) return;
+            profileEditError.textContent = 'The photo could not be processed. Please try another image.';
+            saveProfileEditButton.disabled = false;
+          };
+          sourceImage.onload = function () {
+            if (sequence !== photoReadSequence) return;
+            const scale = Math.min(1, 256 / Math.max(sourceImage.width, sourceImage.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(sourceImage.width * scale));
+            canvas.height = Math.max(1, Math.round(sourceImage.height * scale));
+            const context = canvas.getContext('2d');
+            if (!context) {
+              profileEditError.textContent = 'Your browser could not process the photo.';
+              saveProfileEditButton.disabled = false;
+              return;
+            }
+            context.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+            try {
+              pendingAvatar = canvas.toDataURL('image/jpeg', 0.82);
+            } catch (error) {
+              profileEditError.textContent = 'Your browser could not prepare the photo.';
+              saveProfileEditButton.disabled = false;
+              return;
+            }
+            removeAvatar = false;
+            renderEditAvatar();
+            saveProfileEditButton.disabled = false;
+          };
+          sourceImage.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      removePhotoButton.addEventListener('click', function () {
+        removeAvatar = true;
+        renderEditAvatar();
+      });
+      cancelProfileEditButton.addEventListener('click', function () {
+        photoReadSequence += 1;
+        saveProfileEditButton.disabled = false;
+        editProfileDialog.close();
+      });
+      editProfileForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const name = editNameInput.value.trim();
+        if (!name) {
+          editNameInput.setCustomValidity('Please enter your name.');
+          editNameInput.reportValidity();
+          return;
+        }
+        editNameInput.setCustomValidity('');
+
+        const previousUser = Object.assign({}, user);
+        user.name = name;
+        user.bio = editBioInput.value.trim();
+        user.tagline = user.bio;
+        if (removeAvatar) {
+          delete user.avatar;
+        } else if (pendingAvatar) {
+          user.avatar = pendingAvatar;
+        }
+        if (!saveData('fitquest-user', user)) {
+          Object.keys(user).forEach(function (key) { delete user[key]; });
+          Object.assign(user, previousUser);
+          profileEditError.textContent = 'Your changes could not be saved. Try a smaller photo or clear some browser storage.';
+          return;
+        }
+
+        profileName.textContent = user.name;
+        profileTagline.textContent = user.bio || ('Active member • ' + (user.city || 'Your city'));
+        renderProfileAvatar();
+        profileStatus.textContent = 'Profile updated.';
+        editProfileDialog.close();
+      });
       profileFitness.textContent = user.level || 'Intermediate';
       profileFavorite.textContent = user.favorite || 'Trail run';
       profileAvailability.textContent = user.availability || 'Flexible schedule';
@@ -282,15 +670,122 @@
       const streak = Math.min(7, Math.max(1, Math.round((sessionCount + connectionCount) / 5)));
       document.getElementById('profile-streak').textContent = streak;
       document.getElementById('profile-streak-badge').textContent = String(streak).padStart(2, '0');
-      document.getElementById('profile-sessions').textContent = String(sessionCount || 12);
-      document.getElementById('profile-session-badge').textContent = String(sessionCount || 12).padStart(2, '0');
-      document.getElementById('profile-minutes').textContent = String(totalMinutes || 300);
-      document.getElementById('profile-minutes-badge').textContent = String(totalMinutes || 300);
-      document.getElementById('profile-connections').textContent = String(connectionCount || 24);
-      document.getElementById('profile-connections-badge').textContent = String(connectionCount || 24).padStart(2, '0');
+      document.getElementById('profile-sessions').textContent = String(sessionCount);
+      document.getElementById('profile-session-badge').textContent = String(sessionCount).padStart(2, '0');
+      document.getElementById('profile-minutes').textContent = String(totalMinutes);
+      document.getElementById('profile-minutes-badge').textContent = String(totalMinutes);
+      document.getElementById('profile-connections').textContent = String(connectionCount);
+      document.getElementById('profile-connections-badge').textContent = String(connectionCount).padStart(2, '0');
+      const challengeState = readData('fitquest-challenges', {});
+      const savedXp = Number(challengeState.xp);
+      const totalXp = Number.isFinite(savedXp) ? Math.max(0, Math.floor(savedXp)) : 0;
+      const levelProgress = getLevelProgress(totalXp);
+      document.getElementById('profile-level').textContent = 'Level ' + levelProgress.level;
+      document.getElementById('profile-level-current-xp').textContent = String(levelProgress.xpIntoLevel);
+      document.getElementById('profile-level-required-xp').textContent = String(levelProgress.xpRequired);
+      document.getElementById('profile-level-progress').style.width = (levelProgress.xpIntoLevel / levelProgress.xpRequired * 100) + '%';
+      const levelProgressBar = document.querySelector('.profile-level-track');
+      levelProgressBar.setAttribute('aria-valuemax', String(levelProgress.xpRequired));
+      levelProgressBar.setAttribute('aria-valuenow', String(levelProgress.xpIntoLevel));
+      document.getElementById('profile-xp-total').textContent = String(totalXp);
+
+      const challengeCatalog = [
+        { id: 'three-workouts', title: 'Find Your Rhythm', icon: '🎵', period: 'week' },
+        { id: '150-minutes', title: 'Move for 150', icon: '⚡', period: 'week' },
+        { id: 'three-activities', title: 'Mix It Up', icon: '🧭', period: 'week' },
+        { id: 'monthly-eight', title: 'Eight on the Board', icon: '📅', period: 'month' },
+        { id: 'monthly-600', title: 'Ten Hours Moving', icon: '⏱️', period: 'month' },
+        { id: 'monthly-variety', title: 'Try Something New', icon: '🧭', period: 'month' },
+        { id: 'yearly-100', title: 'Century of Sessions', icon: '🏁', period: 'year' },
+        { id: 'yearly-5000', title: 'Five Thousand Minutes', icon: '🌄', period: 'year' },
+        { id: 'yearly-variety', title: 'All-Round Adventurer', icon: '🗺️', period: 'year' }
+      ];
+
+      function renderJoinedChallenges() {
+        const savedState = readData('fitquest-challenges', {});
+        const joinedIds = Array.isArray(savedState.joined) ? savedState.joined : [];
+        const completed = savedState.completed && typeof savedState.completed === 'object' ? savedState.completed : {};
+        const customChallenges = readData('fitquest-custom-challenges', []);
+        const customCatalog = Array.isArray(customChallenges) ? customChallenges : [];
+        const joinedChallenges = joinedIds.map(function (instanceId) {
+          const parts = String(instanceId).split(':');
+          const challengeId = parts[0];
+          const challenge = customCatalog.find(function (item) { return item.id === challengeId; })
+            || challengeCatalog.find(function (item) { return item.id === challengeId; });
+          if (!challenge) return null;
+          return {
+            instanceId: instanceId,
+            challengeId: challengeId,
+            title: challenge.title,
+            icon: challenge.icon || '🏅',
+            period: challenge.period || 'week',
+            isComplete: Boolean(completed[instanceId] || completed[challengeId])
+          };
+        }).filter(Boolean);
+        const list = document.getElementById('joined-challenge-list');
+        const emptyMessage = document.getElementById('no-joined-challenges');
+        list.textContent = '';
+        emptyMessage.hidden = joinedChallenges.length > 0;
+
+        joinedChallenges.forEach(function (challenge) {
+          const row = document.createElement('div');
+          const details = document.createElement('span');
+          const title = document.createElement('strong');
+          const meta = document.createElement('small');
+          const leaveButton = document.createElement('button');
+          const periodLabel = challenge.period === 'year' ? 'Yearly' : challenge.period === 'month' ? 'Monthly' : 'Weekly';
+
+          row.className = 'activity-item';
+          details.className = 'joined-challenge-copy';
+          title.textContent = challenge.icon + ' ' + challenge.title;
+          meta.textContent = periodLabel + (challenge.isComplete ? ' · Completed' : ' · In progress');
+          details.appendChild(title);
+          details.appendChild(document.createElement('br'));
+          details.appendChild(meta);
+          leaveButton.className = 'button button-small button-outline';
+          leaveButton.type = 'button';
+          leaveButton.textContent = 'Unjoin';
+          leaveButton.setAttribute('aria-label', 'Unjoin ' + challenge.title);
+          leaveButton.addEventListener('click', function () {
+            const currentState = readData('fitquest-challenges', {});
+            const currentJoined = Array.isArray(currentState.joined) ? currentState.joined : [];
+            currentState.joined = currentJoined.filter(function (id) {
+              return id !== challenge.instanceId && id !== challenge.challengeId;
+            });
+            saveData('fitquest-challenges', currentState);
+            renderJoinedChallenges();
+          });
+          row.appendChild(details);
+          row.appendChild(leaveButton);
+          list.appendChild(row);
+        });
+      }
+      const workoutDates = new Set();
+      safeWorkouts.forEach(function (workout) {
+        const date = new Date(workout.date);
+        if (!Number.isNaN(date.getTime())) {
+          workoutDates.add(date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate());
+        }
+      });
+
+      let activeStreak = 0;
+      const streakDate = new Date();
+      streakDate.setHours(0, 0, 0, 0);
+      const todayKey = streakDate.getFullYear() + '-' + streakDate.getMonth() + '-' + streakDate.getDate();
+      if (!workoutDates.has(todayKey)) {
+        streakDate.setDate(streakDate.getDate() - 1);
+      }
+      while (workoutDates.has(streakDate.getFullYear() + '-' + streakDate.getMonth() + '-' + streakDate.getDate())) {
+        activeStreak += 1;
+        streakDate.setDate(streakDate.getDate() - 1);
+      }
+      document.getElementById('profile-streak').textContent = activeStreak;
+      document.getElementById('profile-streak-badge').textContent = String(activeStreak).padStart(2, '0');
+
+      renderJoinedChallenges();
 
       window.addEventListener('storage', function (event) {
-        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections') {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-connections' || event.key === 'fitquest-challenges' || event.key === 'fitquest-custom-challenges' || event.key === 'fitquest-earned-badges') {
           window.location.reload();
         }
       });
