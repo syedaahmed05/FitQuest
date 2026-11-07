@@ -35,6 +35,39 @@
       line-height: 1.1;
     }
 
+    .leaderboard-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .leaderboard-switch {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 10px;
+      background: #dce6ef;
+    }
+
+    .leaderboard-switch button {
+      min-height: 38px;
+      padding: 8px 13px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .leaderboard-switch button[aria-selected="true"] {
+      background: var(--white);
+      color: var(--navy);
+      box-shadow: 0 2px 6px rgba(16, 42, 76, 0.12);
+    }
+
     .leaderboard-panel {
       display: grid;
       gap: 18px;
@@ -43,6 +76,7 @@
     .top-three {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: 230px;
       gap: 16px;
       margin-bottom: 10px;
     }
@@ -50,6 +84,9 @@
     .podium-card {
       position: relative;
       overflow: hidden;
+      align-self: end;
+      grid-row: 1;
+      height: 190px;
       padding: 20px 18px 18px;
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -58,17 +95,21 @@
     }
 
     .podium-card:nth-child(1) {
+      grid-column: 2;
+      height: 230px;
       background: linear-gradient(180deg, #f7f2d6 0%, var(--white) 82%);
       border-color: rgba(196, 164, 43, 0.45);
     }
 
     .podium-card:nth-child(2) {
+      grid-column: 1;
       background: linear-gradient(180deg, #e2e8ee 0%, #c7ced7 26%, #f7f9fb 78%, var(--white) 100%);
       border-color: rgba(115, 126, 136, 0.8);
-      box-shadow: 0 10px 26px rgba(120, 130, 141, 0.22);
+
     }
 
     .podium-card:nth-child(3) {
+      grid-column: 3;
       background: linear-gradient(180deg, #f3e9df 0%, var(--white) 82%);
       border-color: rgba(154, 103, 59, 0.45);
     }
@@ -165,15 +206,22 @@
       transform: translateY(0);
     }
 
+    .mini-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
     .person-name strong,
-    .person-name span {
+    .person-name > div span {
       display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .person-name span {
+    .person-name > div span {
       color: var(--muted);
       font-size: 12px;
     }
@@ -206,8 +254,21 @@
     }
 
     @media (max-width: 760px) {
+      .leaderboard-header-actions {
+        justify-content: flex-start;
+      }
+
       .top-three {
         grid-template-columns: 1fr;
+        grid-template-rows: none;
+      }
+
+      .podium-card:nth-child(1),
+      .podium-card:nth-child(2),
+      .podium-card:nth-child(3) {
+        grid-column: auto;
+        grid-row: auto;
+        height: auto;
       }
 
       .leaderboard-row {
@@ -232,9 +293,10 @@
     </button>
     <nav class="site-nav" id="site-nav" aria-label="Main navigation">
       <a href="index.html">Home</a>
-      <a href="connections.html">Connections</a>
-      <a href="profile.html">Profile</a>
+      <a href="challenges.html">Challenges</a>
       <a class="active" aria-current="page" href="leaderboard.html">Leaderboard</a>
+      <a href="profile.html">Profile</a>
+      <a href="connections.html">Connections</a>
       <a class="nav-signin" href="account.html">Sign in</a>
     </nav>
   </header>
@@ -245,7 +307,13 @@
         <p class="eyebrow">COMMUNITY</p>
         <h1>Leaderboard</h1>
       </div>
-      <a class="button button-outline" href="index.html">Back to dashboard</a>
+      <div class="leaderboard-header-actions">
+        <div class="leaderboard-switch" role="tablist" aria-label="Leaderboard type">
+          <button type="button" role="tab" aria-selected="true" data-ranking="minutes">Minutes</button>
+          <button type="button" role="tab" aria-selected="false" data-ranking="levels">Levels</button>
+        </div>
+        <a class="button button-outline" href="index.html">Back to dashboard</a>
+      </div>
     </header>
 
     <section class="leaderboard-panel">
@@ -292,6 +360,18 @@
         }).join('').slice(0, 2);
       }
 
+      function getLevelProgress(totalXp) {
+        let level = 1;
+        let xpIntoLevel = Math.max(0, Math.floor(totalXp));
+        let xpRequired = 250;
+        while (xpIntoLevel >= xpRequired) {
+          xpIntoLevel -= xpRequired;
+          level += 1;
+          xpRequired = Math.ceil(xpRequired * 1.5);
+        }
+        return { level: level, xpIntoLevel: xpIntoLevel, xpRequired: xpRequired };
+      }
+
       function buildPlayerData() {
         const currentUser = readData('fitquest-user', { name: 'Billie Eilish' });
         const currentName = currentUser && currentUser.name ? currentUser.name : 'Billie Eilish';
@@ -299,24 +379,34 @@
         const currentMinutes = workouts.reduce(function (total, workout) {
           return total + (Number(workout.amount) || 0);
         }, 0);
+        const challengeState = readData('fitquest-challenges', {});
+        const currentXp = Math.max(0, Number(challengeState.xp) || 0);
 
         const players = {
           [currentName]: {
             name: currentName,
             minutes: currentMinutes,
             workouts: workouts.length,
-            badge: 'You'
+            xp: currentXp,
+            badge: 'You',
+            avatar: currentUser.avatar
           },
-          'Alex Lewis': { name: 'Alex Lewis', minutes: 360, workouts: 8, badge: 'Runner' },
-          'Maya Chen': { name: 'Maya Chen', minutes: 330, workouts: 7, badge: 'Climber' },
-          'Jordan Smith': { name: 'Jordan Smith', minutes: 295, workouts: 6, badge: 'Cyclist' },
-          'Aaliyah Brooks': { name: 'Aaliyah Brooks', minutes: 270, workouts: 5, badge: 'Strong' }
+          'Alex Lewis': { name: 'Alex Lewis', minutes: 360, workouts: 8, xp: 1800, badge: 'Runner' },
+          'Maya Chen': { name: 'Maya Chen', minutes: 330, workouts: 7, xp: 1250, badge: 'Climber' },
+          'Jordan Smith': { name: 'Jordan Smith', minutes: 295, workouts: 6, xp: 700, badge: 'Cyclist' },
+          'Aaliyah Brooks': { name: 'Aaliyah Brooks', minutes: 270, workouts: 5, xp: 400, badge: 'Strong' }
         };
 
         return Object.values(players).sort(function (a, b) {
+          if (selectedRanking === 'levels') {
+            const levelDifference = getLevelProgress(b.xp).level - getLevelProgress(a.xp).level;
+            return levelDifference || b.xp - a.xp;
+          }
           return b.minutes - a.minutes;
         });
       }
+
+      let selectedRanking = 'minutes';
 
       function renderLeaderboard() {
         const topContainer = document.getElementById('leaderboard-top');
@@ -336,38 +426,55 @@
         const topThree = players.slice(0, 3);
         topContainer.innerHTML = topThree.map(function (player, index) {
           const rankLabel = index === 0 ? '1' : index === 1 ? '2' : '3';
-          const subtitle = player.workouts + ' sessions';
+          const level = getLevelProgress(player.xp).level;
+          const score = selectedRanking === 'levels' ? 'Level ' + level : player.minutes + ' min';
+          const subtitle = selectedRanking === 'levels'
+            ? player.xp + ' XP • ' + (player.badge || 'Active')
+            : player.workouts + ' sessions • ' + (player.badge || 'Active');
           return '<article class="podium-card">' +
             '<span class="podium-rank">' + rankLabel + '</span>' +
             '<h2>' + player.name + '</h2>' +
-            '<p class="podium-score">' + player.minutes + ' min</p>' +
-            '<p class="podium-meta">' + subtitle + ' • ' + (player.badge || 'Active') + '</p>' +
+            '<p class="podium-score">' + score + '</p>' +
+            '<p class="podium-meta">' + subtitle + '</p>' +
             '</article>';
         }).join('');
 
         const rankedList = players.map(function (player, index) {
           const isCurrentUser = player.name === (readData('fitquest-user', { name: 'Billie Eilish' }).name || 'Billie Eilish');
+          const avatarImage = typeof player.avatar === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(player.avatar)
+            ? '<img src="' + player.avatar + '" alt="">'
+            : '';
           return '<div class="leaderboard-row ' + (isCurrentUser ? 'is-user' : '') + '">' +
             '<div class="rank-pill">#' + (index + 1) + '</div>' +
             '<div class="person-name">' +
-            '<span class="mini-avatar">' + getInitials(player.name) + '</span>' +
+            '<span class="mini-avatar">' + (avatarImage || getInitials(player.name)) + '</span>' +
             '<div>' +
             '<strong>' + player.name + '</strong>' +
             '<span>' + player.badge + '</span>' +
             '</div>' +
             '</div>' +
-            '<div class="leaderboard-metric">' + player.workouts + ' workouts</div>' +
-            '<div class="leaderboard-score">' + player.minutes + ' min</div>' +
+            '<div class="leaderboard-metric">' + (selectedRanking === 'levels' ? player.xp + ' XP' : player.workouts + ' workouts') + '</div>' +
+            '<div class="leaderboard-score">' + (selectedRanking === 'levels' ? 'Level ' + getLevelProgress(player.xp).level : player.minutes + ' min') + '</div>' +
             '</div>';
         }).join('');
 
         listContainer.innerHTML = rankedList;
+        document.querySelectorAll('[data-ranking]').forEach(function (tab) {
+          tab.setAttribute('aria-selected', String(tab.dataset.ranking === selectedRanking));
+        });
       }
+
+      document.querySelectorAll('[data-ranking]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          selectedRanking = tab.dataset.ranking;
+          renderLeaderboard();
+        });
+      });
 
       renderLeaderboard();
 
       window.addEventListener('storage', function (event) {
-        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts') {
+        if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-challenges') {
           renderLeaderboard();
         }
       });
