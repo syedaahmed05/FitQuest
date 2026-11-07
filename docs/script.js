@@ -63,10 +63,21 @@ if (menuButton && siteNav) {
   });
 }
 
-// Sign-in, sign-up, and contact forms only show a demo message.
+const sharedProfileInvite = new URLSearchParams(window.location.search).get("shared");
+const sharedInviteNotice = document.querySelector("#shared-invite-notice");
+
+if (sharedProfileInvite && sharedInviteNotice) {
+  sharedInviteNotice.hidden = false;
+}
+
+// Sign-in and sign-up forms continue to an invited profile in the demo flow.
 document.querySelectorAll(".demo-form").forEach(function (form) {
   form.addEventListener("submit", function (event) {
     event.preventDefault();
+    if (sharedProfileInvite && form.hasAttribute("data-shared-auth")) {
+      window.location.href = "profile.html?shared=" + encodeURIComponent(sharedProfileInvite);
+      return;
+    }
     showMessage("This is a demo. Your information was not sent or saved.");
     form.reset();
   });
