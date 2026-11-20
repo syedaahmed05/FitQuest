@@ -33,6 +33,11 @@
         <p>Sign in or create an account to see how the student fitness app could work.</p>
       </div>
       <section class="content-card auth-card">
+        <div class="shared-invite-notice" id="shared-invite-notice" hidden>
+          <p class="eyebrow">PROFILE INVITATION</p>
+          <p>A FitQuest member shared their profile with you. Sign in or create a demo account to view it and connect.</p>
+          <p class="muted">This is a demo sign-in: credentials are not verified or saved, and connections stay in this browser.</p>
+        </div>
         <div class="auth-tabs" role="tablist" aria-label="Account options">
           <button class="auth-tab active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Sign in</button>
           <button class="auth-tab" type="button" data-auth-tab="signup" role="tab" aria-selected="false">Create account</button>
@@ -41,7 +46,7 @@
           <p class="eyebrow">WELCOME BACK</p>
           <h2>Good to see you</h2>
           <p class="muted">This sign-in form is a visual demo only.</p>
-          <form class="simple-form demo-form">
+          <form class="simple-form demo-form" data-shared-auth>
             <label for="login-email">Email address</label>
             <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" required>
             <label for="login-password">Password</label>
@@ -54,7 +59,7 @@
           <p class="eyebrow">START YOUR JOURNEY</p>
           <h2>Make an account</h2>
           <p class="muted">Create a sample account to preview the sign-up flow.</p>
-          <form class="simple-form demo-form">
+          <form class="simple-form demo-form" data-shared-auth>
             <label for="signup-name">Your name</label>
             <input id="signup-name" type="text" placeholder="Your name" autocomplete="name" required>
             <label for="signup-email">Email address</label>
