@@ -354,6 +354,14 @@
         }
       }
 
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+        });
+      }
+
+      let livePlayers = null;
+
       function getInitials(name) {
         return (name || 'FU').split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) {
           return part.charAt(0).toUpperCase();
@@ -372,7 +380,10 @@
         return { level: level, xpIntoLevel: xpIntoLevel, xpRequired: xpRequired };
       }
 
-      function buildPlayerData() {
+            function buildPlayerData() {
+        if (selectedRanking === 'minutes' && livePlayers && livePlayers.length) {
+          return livePlayers;
+        }
         const currentUser = readData('fitquest-user', { name: 'Billie Eilish' });
         const currentName = currentUser && currentUser.name ? currentUser.name : 'Billie Eilish';
         const workouts = Array.isArray(readData('fitquest-workouts', [])) ? readData('fitquest-workouts', []) : [];
@@ -433,7 +444,7 @@
             : player.workouts + ' sessions • ' + (player.badge || 'Active');
           return '<article class="podium-card">' +
             '<span class="podium-rank">' + rankLabel + '</span>' +
-            '<h2>' + player.name + '</h2>' +
+            '<h2>' + escapeHtml(player.name) + '</h2>' +
             '<p class="podium-score">' + score + '</p>' +
             '<p class="podium-meta">' + subtitle + '</p>' +
             '</article>';
@@ -447,9 +458,9 @@
           return '<div class="leaderboard-row ' + (isCurrentUser ? 'is-user' : '') + '">' +
             '<div class="rank-pill">#' + (index + 1) + '</div>' +
             '<div class="person-name">' +
-            '<span class="mini-avatar">' + (avatarImage || getInitials(player.name)) + '</span>' +
+            '<span class="mini-avatar">' + (avatarImage || escapeHtml(getInitials(player.name))) + '</span>' +
             '<div>' +
-            '<strong>' + player.name + '</strong>' +
+            '<strong>' + escapeHtml(player.name) + '</strong>' +
             '<span>' + player.badge + '</span>' +
             '</div>' +
             '</div>' +
@@ -471,7 +482,33 @@
         });
       });
 
-      renderLeaderboard();
+            renderLeaderboard();
+
+      function loadLivePlayers() {
+        fetch('/api/leaderboard')
+          .then(function (response) {
+            if (!response.ok) { throw new Error('Leaderboard request failed'); }
+            return response.json();
+          })
+          .then(function (rows) {
+            if (!Array.isArray(rows) || !rows.length) { return; }
+            livePlayers = rows.map(function (row) {
+              return {
+                name: row.display_name || row.username,
+                minutes: Number(row.total_minutes) || 0,
+                workouts: Number(row.workouts) || 0,
+                xp: 0,
+                badge: 'Active'
+              };
+            });
+            renderLeaderboard();
+          })
+          .catch(function () {
+            // Backend not running: keep showing the built-in sample data.
+          });
+      }
+
+      loadLivePlayers();
 
       window.addEventListener('storage', function (event) {
         if (event.key === 'fitquest-user' || event.key === 'fitquest-workouts' || event.key === 'fitquest-challenges') {
