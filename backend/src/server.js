@@ -11,29 +11,19 @@ app.use(express.static(path.join(__dirname, '../../docs')));
 // The leaderboard endpoint
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    // const { rows } = await pool.query(`
-    //   SELECT u.username, s.display_name,
-    //    SUM(w.duration_min)::int AS total_minutes,
-    //    COUNT(w.id)::int AS workouts
-    //   FROM workouts w
-    //   JOIN students s ON s.user_id = w.student_id
-    //   JOIN users u ON u.id = s.user_id
-    //   WHERE w.logged_at >= now() - interval '7 days'
-    //   GROUP BY u.id, u.username, s.display_name
-    //   ORDER BY total_minutes DESC
-    //   LIMIT 10
-    // `);
-        const { rows } = await pool.query(`
-      SELECT u.username, u.display_name,
+      const { rows } = await pool.query(`
+      SELECT u.username, s.display_name,
              SUM(w.duration_min)::int AS total_minutes,
              COUNT(w.id)::int AS workouts
-      FROM users u
-      JOIN workouts w ON w.user_id = u.id
+      FROM workouts w
+      JOIN students s ON s.user_id = w.student_id
+      JOIN users u ON u.id = s.user_id
       WHERE w.logged_at >= now() - interval '7 days'
-      GROUP BY u.id, u.username, u.display_name
+      GROUP BY u.id, u.username, s.display_name
       ORDER BY total_minutes DESC
       LIMIT 10
     `);
+        
     res.json(rows);
   } catch (err) {
     console.error(err);
